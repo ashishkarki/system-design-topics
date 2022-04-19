@@ -8,6 +8,7 @@ Various theories and some practical aspects of designing systems in the computer
   - [Caching and how they work](#caching-and-how-they-work)
   - [Queues (more specifically Message Queues)](#queues-more-specifically-message-queues)
   - [Protocols](#protocols)
+  - [Concurrency](#concurrency)
 
 ## Loading balancing and Load Balancers
 
@@ -353,3 +354,42 @@ Various theories and some practical aspects of designing systems in the computer
            1. YES: rest, websockets, gql, long polling
            2. NO: grpc, UDP
     2. Another excellent article by [danhacks](<https://www.danhacks.com/software/grpc-rest-graphql.html>).
+
+## Concurrency
+
+1. **Concurrency !== Parallelism (since)**
+    1. **Parallelism** - _actually doing more than one thing at the same time_. Tasks are done independently from each other.
+    2. **Concurrency** - _providing an illusion of doing more than one thing_ at the same time. Tasks are done by switching amongst them with something like a back-and-forth.
+2. **Processes**:
+    1. Remember, each process has its own separate memory space. One process isn’t allowed to access the memory of another process.
+    2. Also, with a programming language like Java and its JVM, you will always see one process no matter many CPU cores your machine has.
+         1. BUT, **with a library like NodeJS you may see as many process as the number of  CPU cores**. That means for a processing/CPU intensive task, you will consume a lot more memory than a language or library that uses a single process like Java.
+    3. [ASIDE] It means that **too many (or too lengthy) CPU-intensive tasks could keep the main thread too busy to handle other requests, practically blocking it**. The Node. js execution model was designed to cater to the needs of most web servers, which tend to be I/O-intensive.
+    4. Please read this superb [article](<https://yarin.dev/nodejs-cpu-bound-tasks-worker-threads/>) on Node, its workings, and writing CPU intensive tasks.
+    5. Interprocess communication: few common ways
+        1. File (also memory mapped file)
+        2. Signal (using something like kill -9 <process-id>)
+        3. Socket (also Unix Domain Socket)
+        4. Pipe (like so ls | grep ‘hello’)
+3. **Threads:**
+    1. Is the thing that executes your code.
+    2. Every process will create at least one thread but there will usually more than one threads created
+    3. **VVIP: JS is said to be single-threaded but it actually means that a developer is able to (for code execution) utilize only a Single Thread per Process. But, there are still other threads for garbage collection, networking etc**
+    4. **Stack and Heap**
+        1. Stack: **every thread has a stack** which stores the local variables as well as method parameters and the call chain.
+        2. **Heap: every process has all its memory** in something called a heap.
+            1. A Heap is shared between all running threads and this is what causes a lot of multithreaded problems.
+    5. **Threads overhead (or the problem of using the thread-per-request model)**
+        1. Spawning a new thread is relatively slow and costly
+        2. OS limits the number of threads
+        3. Each thread consumes memory and each OS or maybe the language/platform limits the memory allocated for threads. This means you can hit the memory limit even before you hit the number of threads limit
+        4. **Thread Contention**: different threads contend or compete for resources with the shared memory space (so called Heap).
+            1. Some issues are:
+               1. **Race condition**: is when different threads (of the same process) try to write different values to the same memory location at the same time
+               2. The solution of race and similar conditions are:
+                    1. Locks
+                    2. CPU time
+                    3. Shared resources:
+4. **Thread Pools:**
+   1. It is basically the concept wherein threads are created as part of a group/bulk if more threads can be created.
+   2. Otherwise, the thread pool will ask the requesting process to wait while a thread within that pool becomes available.
