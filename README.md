@@ -482,3 +482,29 @@ Various theories and some practical aspects of designing systems in the computer
             1. **Maintenance complexity**: updating/deleting partitions takes extra time. Some RDBMS might not support them at all (for MySQL doesn’t and PostGre does very well)
             2. **Scanning** all partitions is **expensive**
             3. **Harder to maintain uniqueness**: since its a bunch of smaller tables -> some tables might have same primary key using something like UUID
+   6. **CAP theorem**
+        1. C = consistency, A = availability, P = partition tolerance
+        2. The theory says that - “**when network partitioning occurs, system cannot be both consistent and highly available**”.
+            1. _Network partitioning is refers to a network split between nodes due to the failure of network devices_. Example: When switch between two subnets fails, there is a partition between nodes.
+            2. _Partition tolerance means that entire clusters can still work even if a network partition causes communication interruption_ between nodes.
+        3. Everything that says Pick two out of 3 is wrong.. even the original developer of this theory says its wrong
+        4. **Summary of CAP**
+            1. Mostly about NoSQL and mostly about writes
+            2. **Consistency means all nodes see the same data, may not be able to write**
+            3. **Availability means all nodes are able to write, may not see the same data.**
+                1. When clients finally read data, the multiple writes will be resolved either by (a) majority vote (b) timestamp (return whichever is new or old)
+   7. **ACID in DB context**
+        1. **Atomicity, Consistency, Isolation, Durability**
+        2. This concept is _more related to Transactions rather than relational DBs_
+        3. **What it means?**
+            1. **Atomicity**: _**either everything inside a transaction happens or nothing happens at all**_. If there is error executing some statement within a transaction, then the whole transaction is rolled back
+            2. **Consistency**: basically implies a DB adheres to some constraints like have unique ID for each row etc. _**That is if you try to commit something that is wrong, that transaction will/should fail.**_
+            3. **Isolation**: _**every transaction should be carried out in isolation with other transactions**_ - I.e. other transactions should not see the results of the ongoing transaction until that transaction is committed
+            4. **Durability**: says that once a use commits a transaction, it should be _**saved to a durable storage like a disk**_.
+        4. **Downsides of following ACID methodology**
+            1. First thing is implementing ACID is complex and slow.
+            2. Following are **overheads of each**:
+                1. Atomicity - memory consumption
+                2. Consistency - CPU consumption, IO
+                3. Isolation - memory, cpu, IO
+                4. Durability - IO (have to save everything to disk)
