@@ -198,3 +198,158 @@ Various theories and some practical aspects of designing systems in the computer
                3. And, Kafka stores the offsets at which each consumer in a consumer group has been reading. As the consumer continues reading the offset value is increased.
 
 ## Protocols
+
+1. _**TCP protocol (Transmission Control Protocol)**_
+   1. Diagrammatic overview of TCP:
+    <img src="/assets/img/TCP-Overview.png" alt="TCP Overview" />
+   2. **Pros and Cons**
+      1. **Pros**:
+         1. **Reliable**: a message from sender to receiver is usually broken down into smaller “packets”.
+            1. TCP is reliable in the sense that when the sender sends a packet (using TCP) to the receiver (and it starts a new timer) ->
+            2. then, either the receiver acknowledges that it received the packet or if a timeout (of that timer set by the TCP) occurs, the sender will re-send the message again.
+         2. **Ordered**: TCP orders (i.e. assigns numbers) to each pieces/packets of the message being sent.
+            1. The receiver uses these numbers to identify the packets and if something seems missing and out of order, then it will ask the sender to re-send that particular packet.
+         3. **Error-checked**: means Tcp adds a checksum for each packet (to ensure the integrity of each packet).
+            1. A checksum is a number that is calculated based on the actual content of the message.
+            2. When the receiver gets the packet, it computes its own version of checksum (of course using the same method as sender) and compares it with the checksum from the sender.
+            3. If the checksums are different, the receiver can ask the sender to re-send that packet.
+      2. **Cons**
+         1. Slower than some other protocols
+2. **UDP protocol (User Datagram Protocol)**
+   1. UDP doesn’t have any complexity of TCP, it doesn’t wait for ACK and doesn’t number the packets
+   2. Since it does less work, it is faster than TCP but it less reliable than TCP. That is the trade-off.
+   3. **When to use UDP then?**
+      1. UDP is good for a constant stream of data where the speed is more important than losing some tiny amount of data
+      2. _In a system design interview, “sending a lot of data FAST” most probably means choosing UDP_
+      3. **Some example usages:**
+         1. **Monitoring metrics**: like CPU usage very fast like 100 times a second which means losing a few readings doesn’t matter much
+         2. **Stock trading**: is also a similar example to monitoring from above since in most cases stock values fluctuates many times per second or minute so losing a few data points here and there wouldn’t be that problematic
+         3. **Video streaming**: our video gets bit fuzzy at times means the browser might be losing some data but doing its best to make sense of remaining video data
+         4. **Gaming**: for example the game or your opponents video/frame freeze for split seconds every now and then
+3. _**HTTP (hypertext transfer protocol)**_
+   1. Http is based on TCP where hypertext is any text containing links to other documents
+   2. It is a request and response based protocol based on Application Layer 7 of OSI model.
+   3. **Request contains**: Method, URL, Headers and optionally a Body
+   4. **Response contains**: Status, Header and optionally a Body
+   5. Sometimes POST is used instead of GET since GET has a limit on how much data it can send via its query string (stuff after ? Symbol) plus since POST puts everything inside a body, it is more secure from prying eyes that way.
+   6. **Http Status codes (common ones)**
+      1. 100-199 : Informational
+         1. 200-299: Successful
+            1. 201: Created
+         2. 300-399: Redirection
+            1. 301: moved permanently (to another webpage address)
+         3. 400-499: Client error
+            1. 401: Unauthorized - meaning client is not authenticated yet
+            2. 403: forbidden - client doesn’t have correct permission for this page even after logging in
+            3. 404: Not found - client is asking for a page or entity that doesn’t exist on the server
+         4. 500-599: Server error
+   7. **HTTP Verbs:**
+        1. GET
+        2. _POST: is not idempotent_ (repeating a Post will execute a new action for example create a new user)
+        3. _PUT: is idempotent_ (and hence more suitable to do things like status (say pending, delivered etc) updates
+
+4. _**REST architecture**_
+    1. Technically, REST is not really protocol since it doesn’t have a strict definition - basically tells you how to structure your API
+    2. **Features of REST**
+        1. Built on Http
+        2. It standardizes the URL structure as well as emphasizes on proper use of HTTP verbs
+    3. **REST in practice or Restful-ness**
+        1. Write URL parameters in pairs
+           1. For example DELETE libraries/<library-id>/books/<book-id>
+        2. Stick to proper HTTP verbs usage like GET for Read, POST for Create, PUT for Update and so on..
+        3. **URL structure (of each pair): first part is resource name is plural** (for example users or accounts) and second part is the ID of the actual resource
+        4. BUT, if you need deeper nesting (number of pairs in the URL) than 2, then think about possibly using a different protocol like GraphQL
+        5. If required, you should also be able to provide Pagination and Sorting capabilities via your api like so
+           1. GET /books?page=2&limit=25&sort=<fieldName>
+
+5. _**WebSockets Protocol**_
+    1. It is based on Sockets which sits on the 5th layer of the OSI model called Session layer.
+    2. WebSocket is a communication protocol which features bi-directional, full-duplex communication over a persistent TCP connection
+    3. **When/why to use web-sockets?**
+        1. In such cases where is constant polling or checking to see if something is returned and
+        2. HTTP’s way of sending a request and then have to constantly check for response is very wasteful
+    4. **How does it work?**
+        1. WS is built on top of Tcp and is a Duplex protocol - the client has to still connect to the server but only once
+        2. But, once the connection is established, both the server and the client can send messages simultaneously
+        3. The server can send messages without client asking (polling) for it and the server doesn’t have to respond
+    5. **Cons of WS**
+        1. More complicated than http and may not be supported in all languages
+        2. NOTE: WS (unlike http) is a Stateful protocol which means if there is a network error, WS connection will be dropped and you will have to reconnect by yourself
+        3. Stateful vs Stateless Protocol
+            1. <https://www.interviewbit.com/blog/stateful-vs-stateless/>
+            2. the major feature of **stateful is that it maintains the state of all its sessions**, be it an authentication session, or a client’s request for information. Stateful are those that may be used repeatedly, such as online banking or email. **They’re carried out in the context of prior transactions** in which the states are stored, and what happened in previous transactions may have an impact on the current transaction
+        4. Load balancers may have some troubles since WS create long-lived connections unlike short-lived connections that they are normally used for
+        5. Doesn’t have standard verbs like HTTP
+    6. **REST vs WS**
+       1. Please check this excellent resource on [geekforgeeks](https://www.geeksforgeeks.org/difference-between-rest-api-and-web-socket-api/).
+
+6. _**Long Polling**_
+    1. It is not really a protocol but more of an architectural pattern. It serves as an alternative to using WebSockets.
+    2. Major problem with using Http for applications like chatting is the constant need to open and close connections. The gap between connections are major waste of time.
+    3. **WS vs Long Polling**
+        1. The notes below are based on this [webpage](<https://dev.to/kevburnsjr/websockets-vs-long-polling-3a0o>).
+        2. **What is long polling?**
+            1. Long Polling is a near-real-time data access pattern that predates WebSockets.
+            2. _A client initiates a TCP connection (usually an HTTP request) with a maximum duration (ie. 20 seconds). If the server has data to return, it returns the data immediately, usually in batch up to a specified limit._
+            3. _If not, the server pauses the request thread until data becomes available at which point it returns the data to the client._
+            4. WebSockets are Full-Duplex meaning both the client and the server can send and receive messages across the channel. BUT,
+               1. Long Polling is Half-Duplex meaning that a new request-response cycle is required each time the client wants to communicate something to the server.
+        3. **Generally, WebSockets will be the better choice because** based on this [link](<https://ably.com/blog/websockets-vs-long-polling>):
+            1. Long polling is much more resource intensive on servers whereas WebSockets have an extremely lightweight footprint on servers.
+            2. Long polling also requires many hops between servers and devices
+    4. **Pros of long polling**
+            1. Real time message delivery just like WS
+            2. Good alternative to WS if WS aren’t an option
+    5. **Cons of long polling**
+        1. May be hard to implement in some languages and frameworks.
+            1. For example in RoR, the connection is controlled by the framework so there is no easy way to keep connections open until a new message comes in.
+        2. If your web server is based on threads or processes, maintaining too many long connections is difficult
+
+7. _**gRPC ()**_
+   1. But First what is **RPC (Remote Procedure Call)** ?
+        1. Invoke another service as if it is a local function. The function is described in an abstract language called Interface Description Language (IDL)
+        2. **Diagrammatic representation** - How does RPC call work?
+            <img src="/assets/img/how-RPC-works.png" alt="sample of how RPC works" />
+        3. Now, **what is gRPC**?
+            1. Developed by Google
+            2. It _uses “Protocol Buffer” or ProtoBuf as IDL (to encode and decode the messages) and HTTP2 for transportation of messages_
+            3. Main drawback is that it _cannot be used in the Browsers and mobile_
+        4. **What is Protobuf ?**
+            1. It is a Binary Protocol and so is not human readable (unlike say JSON format)
+            2. The main advantage is protobuf messages are much smaller than JSON or XML and hence it is much faster in general
+            3. How does gRPC work?
+                <img src="/assets/img/how-gRPC-works.png" alt="sample of how gRPC works" />
+8. _**GraphQL**_
+    1. Developed by Facebook in 2015. **Built to solve two problems that REST has**:
+        1. **Overfetching**: for example we fetched a whole user object over the network when we only needed user’s name
+        2. **Underfetching**: for example when we need a complete object from a REST api but we are only pulling in the id or name from that API.
+           1. Say we pull a user’s name and his friends list. A friends list is most probably only a bunch of IDs of that user’s friends.
+    2. **What is GQL?**
+            1. GQL is based on Http and its request and response are in JSON format
+            2. GQL let you define which fields to return as well as which nested entities to return
+            3. **GQL Query** lets you select data whereas **GQL Mutation** lets you update/modify data using Post, Put etc verbs
+    3. **Cons of GQL**
+        1. Since GQL uses POST requests, the results are less cacheable
+            1. **_ASIDE - why are POST requests not cacheable?_**
+                1. **POST requests are not cacheable by default** but can be made cacheable if either an Expires header or a Cache-Control header with a directive, to explicitly allows caching, is added to the response.
+                2. Responses to PUT and DELETE requests are not cacheable at all
+                3. But HTTP **caching is applicable only to idempotent requests**, which makes a lot of sense; only idempotent and nullipotent (an action which has no side effect. Queries are typically nullipotent: they return useful data, but do not change the data structure queried.) requests yield the same result when run multiple times.
+                4. When caching is enabled, the data is retrieved from the browser cache instead of from the business object on the server.
+        2. Support outside JS ecosystem is still not great
+        3. Uses JSON object by default which can get bulky in size
+
+9. _**Also, comparing REST vs GraphQL vs gRPC ?**_
+    1. **Roughly, which protocol to use based on following scenarios:**
+        1. Based on **whether the API will be external** (meaning are the APIs on the server being used by external clients)
+           1. YES (means these are good to use): REST, WebSockets, GQL, UDP, Long Polling
+           2. NO (means this protocol is not very suitable): gRPC since external clients are usually browsers and gRPC doesn’t support browser/mobile clients
+        2. Based on **if the communication need to be Bi-Directional** or we could just use a request-response model like in Http
+           1. YES: Websockets, UDP, (somewhat) Long Polling
+           2. NO: Rest, grpc, gql
+        3. Based on **if we need High Throughput** (process thousands of messages per second)
+           1. YES: websockets, grpc, UDP (faster than other two but less reliable in this case)
+           2. NO: Rest, gql, long polling
+        4. Based on if you need **Browser and/or Mobile support** ?
+           1. YES: rest, websockets, gql, long polling
+           2. NO: grpc, UDP
+    2. Another excellent article by [danhacks](<https://www.danhacks.com/software/grpc-rest-graphql.html>).
