@@ -9,6 +9,7 @@ Various theories and some practical aspects of designing systems in the computer
   - [Queues (more specifically Message Queues)](#queues-more-specifically-message-queues)
   - [Protocols](#protocols)
   - [Concurrency](#concurrency)
+  - [Databases](#databases)
 
 ## Loading balancing and Load Balancers
 
@@ -21,42 +22,42 @@ Various theories and some practical aspects of designing systems in the computer
 
     > Most explanations are from [CloudFlare](https://tinyurl.com/yn2ts2zy)
 
-    1. <u>Round robin</u> (Static load balancing): Round robin load balancing distributes traffic to a list of servers in rotation using the Domain Name System (DNS)
-    2. <u>Least Connections</u> (Dynamic load balancing)
-    3. <u>Resource based</u>: Distributes load based on what resources each server has available at the time.
+    1. **Round robin** (Static load balancing): Round robin load balancing distributes traffic to a list of servers in rotation using the Domain Name System (DNS)
+    2. **Least Connections** (Dynamic load balancing)
+    3. **Resource based**: Distributes load based on what resources each server has available at the time.
        1. Specialized software (called an "agent") running on each server measures that server's available CPU and memory, and the load balancer queries the agent before distributing traffic to that server.
-    4. <u>Weighted variants of the above 3 strategies</u>: basically assign a weight to each server. And, then server which has a bigger weight (i.e. is deemed to handle more traffic) will get more requests based on either round robin or least connections etc
-    5. <u>Random</u> (Dynamic):
-    6. <u>IP Hash</u> (Static load balancing): Combines incoming traffic's source and destination IP addresses and uses a mathematical function to convert it into a hash.
+    4. **Weighted variants of the above 3 strategies**: basically assign a weight to each server. And, then server which has a bigger weight (i.e. is deemed to handle more traffic) will get more requests based on either round robin or least connections etc
+    5. **Random** (Dynamic):
+    6. **IP Hash** (Static load balancing): Combines incoming traffic's source and destination IP addresses and uses a mathematical function to convert it into a hash.
        1. Based on the hash, the connection is assigned to a specific server.
 
 3. **TYPES of Load Balancers**: 2 Types
 
     > Most explanations from [nginix site](https://tinyurl.com/2p9dv8xj)
 
-    1. <u>Layer 4</u>: operates in the Transport layer (which is 4th layer in the OSI model and has access to TCP or UDP protocols.
-       1. Layer 4 load balancers make their <u>routing decisions based on address information extracted from the first few packets in the TCP stream, and do not inspect packet content.</u>
+    1. **Layer 4**: operates in the Transport layer (which is 4th layer in the OSI model and has access to TCP or UDP protocols.
+       1. Layer 4 load balancers make their _routing decisions based on address information extracted from the first few packets in the TCP stream, and do not inspect packet content._
        2. A Layer 4 load balancer is often a dedicated hardware device supplied by a vendor
-       3. <u>When the Layer 4 load balancer receives a request and makes the load balancing decision, it also performs Network Address Translation (NAT) on the request packet,</u> changing the recorded destination IP address from its own to that of the content server it has chosen on the internal network.
+       3. _When the Layer 4 load balancer receives a request and makes the load balancing decision, it also performs Network Address Translation (NAT) on the request packet,_ changing the recorded destination IP address from its own to that of the content server it has chosen on the internal network.
           1. Similarly, before forwarding server responses to clients, the load balancer changes the source address recorded in the packet header from the server’s IP address to its own
-    2. <u>Layer 7</u>: operates in Application layer (which is the topmost layer of OSI model and basically the normal internet)
+    2. **Layer 7**: operates in Application layer (which is the topmost layer of OSI model and basically the normal internet)
        1. Has access to everything Layer 4 has plus access to HTTP headers, cookies and payload
        2. Layer 7 load balancers base their routing decisions on various characteristics of the HTTP header and on the actual contents of the message, such as the URL, the type of data (text, video, graphics), or information in a cookie.
-       3. Rather than manage traffic on a packet-by-packet basis like Layer 4 load balancers that use NAT, <u>Layer 7 load balancing proxies can read requests and responses in their entirety.</u>
+       3. Rather than manage traffic on a packet-by-packet basis like Layer 4 load balancers that use NAT, _Layer 7 load balancing proxies can read requests and responses in their entirety._
        4. Layer 7 are more powerful that way but are also expensive than layer 4.
 
-4. <u>Advantages or usages of LBs</u>:
-    1. <u>Makes our system resilient</u> by routing requests to available servers if one or more servers are down
-    2. Makes it easy to make our system <u>Horizontally scalable</u> (that is easily plug new servers to the LBs as required for new requests)
+4. **Advantages or usages of LBs**:
+    1. **Makes our system resilient** by routing requests to available servers if one or more servers are down
+    2. Makes it easy to make our system **Horizontally scalable** (that is easily plug new servers to the LBs as required for new requests)
 
 ## CDNs (Content Delivery Networks)
 
 1. A CDN allows for the quick transfer of assets needed for loading Internet content including HTML pages, javascript files, stylesheets, images, and videos.
-2. Basically, <u>CDNs allow you to cache your static contents like images in a globally distributed network of servers (such servers are CDNs) and quickly provide them to the users of the client website.</u>
+2. Basically, _CDNs allow you to cache your static contents like images in a globally distributed network of servers (such servers are CDNs) and quickly provide them to the users of the client website._
 3. A requirement or good candidates of stuff served by CDNs are again static content that DO NOT CHANGE often.
 4. **Types of CDN**: 2 types of CDN
-   1. <u>Push CDN</u>: the client/original website Pushes new content to the CDNs. Might not be very efficient if you have large number of new resource/contents
-   2. <u>Pull CDN</u>: is a lazy type CDN - it will only Pull (and hence cache) some content (generally static content) if there is a request for it (on the original or client’s website).
+   1. **Push CDN**: the client/original website Pushes new content to the CDNs. Might not be very efficient if you have large number of new resource/contents
+   2. **Pull CDN**: is a lazy type CDN - it will only Pull (and hence cache) some content (generally static content) if there is a request for it (on the original or client’s website).
       1. Meaning the first request will be slow since the CDN hasn’t already kept of copy of a particular resource
       2. Subsequent requests will be very fast
 5. **Summary of CDNs**:
@@ -68,17 +69,17 @@ Various theories and some practical aspects of designing systems in the computer
 
 1. To be cost-effective and to enable efficient use of data, caches must be relatively small.
 2. Why caching? To improve access to common data faster based on where you need it like so Code/Program (fastest) > Memory > Disk > Network > …
-3. <u>Pros of caching</u>:
-   1. Improve read performance (aka <u>lowers Latency</u>)
-   2. Reduce the load (aka <u>increases Throughput</u>)
-      1. <u>Latency</u> indicates <u>how long it takes</u> for packets to reach their destination. <u>Throughput</u> is the term given to <u>the number of packets</u> that are processed within a specific period of time.
+3. **Pros of caching:**
+   1. Improve read performance (aka **lowers Latency**)
+   2. Reduce the load (aka **increases Throughput**)
+      1. **Latency** indicates **how long it takes** for packets to reach their destination. **Throughput** is the term given to **the number of packets** that are processed within a specific period of time.
       2. Lower latency goes with faster throughput, and higher latency goes with slower throughput.
-4. <u>Cons of caching</u>:
-   1. <u>Increases complexity</u>: overhead of adding and maintaining the cache
-   2. <u>Introduces inconsistencies</u>: if cache has stale data than actual data store in the disk or server or DB etc
-   3. <u>Consumes resources</u>: you need additional space or dedicated hardware or software to maintain a cache within memory or disk or elsewhere
-5. <u>Caching strategies</u> (most common are follows:)
-   1. <u>For Reads</u>:
+4. **Cons of caching:**
+   1. **Increases complexity**: overhead of adding and maintaining the cache
+   2. **Introduces inconsistencies**: if cache has stale data than actual data store in the disk or server or DB etc
+   3. **Consumes resources**: you need additional space or dedicated hardware or software to maintain a cache within memory or disk or elsewhere
+5. **Caching strategies** (most common are follows:)
+   1. **For Reads:**
       1. **Cache Aside**: if the requested data is not in the cache, get it from storage and then also store it in the cache for future usage. The app can talk to the storage if there is a cache miss.
          1. Pretty common when using a caching mechanism like Redis.
          2. **Pros**: only have to cache what is needed
@@ -96,7 +97,7 @@ Various theories and some practical aspects of designing systems in the computer
             1. this strategy **promotes cache misses** (since we only bring stuff into cache once it is needed) which is expensive
             2. **Data staleness**: since we read from DB first and then into cache, by the time data is stored in cache, the DB data might already be updated
             3. **Reliability**: how reliable is the cache? Since it is being used as the single source of all the data requirements for the application
-   2. <u>For Writes</u>
+   2. **For Writes**
        1. **Write Through**: The application interacts with an API that, for each new write or update to the DB, also store that data in the cache.
           1. **Pros**: data in the cache **will never be stale**
           2. **Cons**:
@@ -110,7 +111,7 @@ Various theories and some practical aspects of designing systems in the computer
        3. **Cons**
             1. **Reliability**: again how reliable is the cache, what if the data is lost before writing to the storage
             2. **Lack of consistency**: if we don’t write data from cache to DB/storage often enough (then DB will have stale data compared to cache)
-6. <u>Eviction Policies</u>: when our cache becomes too large meaning it has either too many keys or takes too much memory, we have to remove some stuff. Most common policies for eviction are:
+6. **Eviction Policies**: when our cache becomes too large meaning it has either too many keys or takes too much memory, we have to remove some stuff. Most common policies for eviction are:
    1. **LRU (Least Recently Used)**: based on a LinkedList where the head points to the next element to be removed. How it works:
       1. Anything that has been recently accessed moves to the tail of that list, meaning its probability of eviction is low.
       2. When there is a cache-miss and a new item is added to the cache, it moves to the tail of that list and pushes the head element out.
@@ -393,3 +394,91 @@ Various theories and some practical aspects of designing systems in the computer
 4. **Thread Pools:**
    1. It is basically the concept wherein threads are created as part of a group/bulk if more threads can be created.
    2. Otherwise, the thread pool will ask the requesting process to wait while a thread within that pool becomes available.
+
+## Databases
+
+   1. **Indexes - what, why and how ?**
+        1. An index is created per column (generally a column which accessed more frequently, for example you search the users table by name column)
+        2. If there is no index for a commonly accessed column (for example name of the users table), then the DBMS will have to do a full table scan searching the entire table row-by-row
+        3. But, if there is an index, the Db will check the index first and get the rows with this index.
+        4. [ASIDE] **How does indexing work?** See this [ref](<https://chartio.com/learn/databases/how-does-indexing-work/>) for the details below.
+            1. Indexing adds a data structure with columns for the search conditions and a pointer
+            2. The pointer is the address on the memory disk of the row with the rest of the information
+            3. The index data structure is sorted to optimize query efficiency
+            4. The query looks for the specific row in the index; the index refers to the pointer which will find the rest of the information
+        5. More on creating indexes taking postgres as example (reference is [tutorialspoint](https://www.tutorialspoint.com/postgresql/postgresql_indexes.htm)):
+           1. Simply put, an index is a pointer to data in a table. An index in a database is very similar to an index in the back of a book.
+           2. For example, if you want to reference all pages in a book that discusses a certain topic, you have to first refer to the index, which lists all topics alphabetically and then refer to one or more specific page numbers.
+           3. An index helps to speed up SELECT queries and WHERE clauses; however, it slows down data input, with UPDATE and INSERT statements.
+           4. Indexes can be created or dropped with no effect on the data.
+           5. A syntax of multicolumn index creation will look like so:
+
+            ```
+                CREATE INDEX index_name
+                ON table_name (column1_name, column2_name);
+            ```
+
+           6. Whether to create a single-column index or a multicolumn index, take into **consideration the column(s) that you may use very frequently in a query's WHERE clause** as filter conditions.
+           7. The following guidelines indicate **when to avoid creating indexes**:
+              1. Indexes should not be used on **small tables**.
+              2. Tables that have **frequent, large batch update** or insert operations.
+              3. Indexes should not be used on columns that contain a **high number of NULL values**.
+              4. **Columns that are frequently manipulated** should not be indexed.
+   2. **Sharding (in databases)**
+        1. Most RDBMS have limitation of how big a single instance is allowed to get, sharding is one of the solutions to that limitation.
+        2. Sharding is (see [ref](<https://www.mongodb.com/features/database-sharding-explained>)):
+            1. **Sharding is a method for distributing a single dataset across multiple databases, which can then be stored on multiple machines.**
+            2. This allows for larger datasets to be split in smaller chunks and stored in multiple data nodes, increasing the total storage capacity of the system.
+            3. **Sharding is a form of scaling known as horizontal scaling or scale-out, as additional nodes are brought on to share the load.**
+               1. Horizontal scaling allows for near-limitless scalability to handle big data and intense workloads.
+        3. Another description of sharding from [digitalocean](https://www.digitalocean.com/community/tutorials/understanding-database-sharding):
+           1. Sharding is a database architecture pattern related to horizontal partitioning — the practice of separating one table’s rows into multiple different tables, known as partitions.
+           2. Each partition has the same schema and columns, but also entirely different rows. Likewise, the data held in each is unique and independent of the data held in other partitions.
+           3. Sharding involves breaking up one’s data into two or more smaller chunks, called logical shards. The logical shards are then distributed across separate database nodes, referred to as physical shards, which can hold multiple logical shards.
+           4. Despite this, the data held within all the shards collectively represent an entire logical dataset.
+        4. The main problems to solve with sharding is (a) how to split up the datasets, and (b) how does application know which machine/node to get its data from.
+        5. There are two main approaches to **sharding of DBs: Tenet based and Hash based sharding**:
+            1. **Tenet based**: **also called geo-sharding**, has the pro of being easy to create and reason about
+                1. Tenet based is good for systems that have clear separation between entities.
+                2. For example, in a ride-hailing app like Uber, a driver will only drive one car but travel between multiple countries. The system thinks the driver has to register for each country -> so we create a DB shard for each country.
+                3. Cons of Tenet based is mostly about Uneven Distribution (some shards might still be too big to handle).
+            2. **Hash based:**
+                1. In this approach, **we create multiple databases, and each time we need to perform an operation on a DB entity, we first calculate in which shard this entity is located**.
+                2. We do this by applying a hash function to the primary identifier of this entity like so:
+                    1. `hash-fxn(primaryId) % numOfShards`
+                3. **Pros** of hash based sharding: (a) gives Even Distribution (b) works well for key-value data
+                4. **Cons** are: (a) adding new shards is difficult since we have to change the hashing function.
+        6. **Downsides of Sharding**
+            1. **Added complexity** (since each shard is a new machine that needs to be allocated memory, CPU etc)
+            2. Data may still become **unbalanced** (say using Tenet based sharding)
+            3. Cross (multiple querying) shard operations are expensive.
+   3. **Consistent Hashing** (What and Why is it needed)
+        1. Say we have to create new shards (re-shard) as our data grows (particularly if we are using the hash-based sharding strategy)
+        2. This results in a problem wherein a lot of the entities have to be moved around since their hashed values will change.
+        3. **With consistent hashing, we insert a new shard in the middle of the currently existing shards so we don’t have to move a lot of entities around**
+        4. A useful, quick video intro is <https://www.youtube.com/watch?v=ffE1mQWxyKM>
+   4. **What is sharding vs partitioning?** Ref from [hazelcast](<https://hazelcast.com/glossary/sharding/>)
+        1. Sharding and partitioning are both about breaking up a large data set into smaller subsets. **The difference is that sharding implies the data is spread across multiple computers while partitioning does not.**
+        2. **Partitioning is about grouping subsets of data within a single database instance.**
+   5. **Partitioning**
+        1. Sharding is breaking one large database into smaller databases whereas **Partitioning is breaking one large table into smaller tables and the splitted tables are still in the same database**.
+        2. **Benefits of partitioning** (consider everything like a table or an index like a file)
+            1. Smaller files (I.e partitions) means faster queries
+            2. The indexes will be smaller for a smaller table and can easily fit into memory
+            3. Dropping partitions is faster
+        3. **Partitioning strategies: 3 of them are -**
+            1. **List of values**: like the status of an order like placed, dispatched, delivered etc.
+                1. This partitioning by a list of values might still produce Uneven Data distribution (which is a con).
+                2. Another con is having to move data between tables when their values/status changes.
+            2. **Range of dates**: stored data based on weeks or months or years as required by the business
+                1. **Pro** is that this strategy is great if you want to get rid (totally drop, rather than delete) of old and less useful historical data say from last year
+                2. **Con** is data might still be unevenly distributed since some dates might have more data than others for example people buy more during Christmas or Thanksgiving months
+            3. **Hash of a key**: similar to sharding by hash method
+               1. Lets pick a key say the primary key of a table
+               2. We define how many smaller tables we want to have
+               3. Then we put the entry/row based on a formula like so:
+                 `hashFxn(id) % numOfSmallerTables`
+        4. **General downsides of Partitioning**
+            1. **Maintenance complexity**: updating/deleting partitions takes extra time. Some RDBMS might not support them at all (for MySQL doesn’t and PostGre does very well)
+            2. **Scanning** all partitions is **expensive**
+            3. **Harder to maintain uniqueness**: since its a bunch of smaller tables -> some tables might have same primary key using something like UUID
