@@ -7,6 +7,7 @@ Various theories and some practical aspects of designing systems in the computer
   - [CDNs (Content Delivery Networks)](#cdns-content-delivery-networks)
   - [Caching and how they work](#caching-and-how-they-work)
   - [Queues (more specifically Message Queues)](#queues-more-specifically-message-queues)
+  - [Protocols](#protocols)
 
 ## Loading balancing and Load Balancers
 
@@ -124,3 +125,76 @@ Various theories and some practical aspects of designing systems in the computer
          2. LRU is faster, cheaper and is used as default in most cases
 
 ## Queues (more specifically Message Queues)
+
+1. Similar to a DB, a queue is a sophisticated piece of software that runs on some dedicated hardware
+2. Queues are used to deliver messages asynchronously which means that we simply send the message and don’t wait for a response.
+3. For example, for a Pizza shop - a queue sits between the “Pizza Service” (possibly a web app with some api) and the “Payments Service”.
+   1. Whenever, a customer orders a pizza via the Service, the Service puts a new message on the queue which implies (indirectly) for the Payments service to process it.
+   2. This way our Service (web app etc) is de-coupled from the Payments Service and allows for massive ordering
+4. When any service connects to a Queue, it must choose one of two roles- it can either be a Producer or a Consumer.
+5. This allows for **total de-coupling between Producers and Consumers** because:
+   1. A Producer doesn’t care if it is connected to a Consumer and vice-versa, all a producer (or a consumer) care about is if it is connected to a Queue.
+   2. Producers and consumers can be implemented in totally different languages and libraries and still be able to communicate.
+6. **Queues pros and cons**
+   1. **Pros**:
+      1. Queue acts as buffer for messages/requests for the consumer
+      2. Request **spikes are smoothed** because of this buffering
+      3. **Message durability**: as queues are able to preserve messages even if consumers go down and some messages aren’t delivered
+   2. **Cons**
+      1. **Increased system complexity** to add new hardware and software plus communication with other pieces
+      2. **Increases latency** since message now have to go via the Queue
+      3. **Lower reliability of sorts**: since the whole communication is asynchronous, we won’t know in real-time what happened to messages we inserted from the Producer (for example, my payment is in the Queue but has it been delivered to the payment system - there is no way to get instant feedback)
+7. **Messaging Paradigms or Model**: (or how messages can be delivered from a producer to a consumer using these queues). There are two main ways:
+   1. **Message Queue**: when the queue ensures a specific message is sent to only one consumer.
+      1. For example we don’t want a user’s payment to be sent to multiple consumers and the user being charged multiple times hence the payment information is sent to one consumer for processing.
+      2. **Features of message queue**:
+         1. Suited to execute some “Action” like making a payment once
+         2. Each message will be delivered exactly once to one Consumer and that is it
+         3. The queued messages can arrive Out of Order since this has retry mechanism => that is if the selected consumer is dead, the queue retries (sometime later) to some the same or another available consumer.
+   2. **Publisher/Subscriber (aka Pub/Sub)**: used when we want to notify multiple services (I.e. consumers in this case) about an event that happened.
+      1. For example, the Payments Service (once the payment is successful) might send messages (via another Queue) to the Receipts Service and the Billing Service.
+      2. **Features of pub/sub:**
+         1. Suited to provide “Notifications” to multiple consumers
+         2. Theory is “At least once delivery” (could send multiple messages to one or more connected consumers).
+         3. Messages are always delivered In Order since there are no Re-tries.
+8. What is an **Exchange in the Message queuing world**?
+   1. It is a router or a load balancer that receives all messages and then puts those messages in the right queue for further processing.
+   2. It supports three 3 ways of working:
+      1. **Direct**: directly put a given message into the queue with the specified Routing-Key. In this mode a queue, acts like a “Message Queue”.
+      2. **Topic/Header**: In this mode a queue, acts like a “Message Queue”.
+         1. **Topic exchange** means the queue and consequently the exchange is shared (divided into parts) for example based on a region or state etc. The topic name would be sort of a composite of the <topic-name>:<shard-name>
+         2. **Header exchange** is same as topic exchange but the routing is done based on the information in the header rather than the topic-name.
+         3. **Fan-out**: spreads the message to all the consumers, with each consumer receiving the same message. In this mode, a Queue becomes a Pub/Sub.
+9. **What is a Routing-key?**
+   1. It identifies to which queue should the message from a producer go it.
+   2. Routing keys can be complex and carry more than the name/id of the queue (like also carry stuff like user data etc)
+10. What is a **Channel in queuing world? -> this concept provides Concurrency**
+    1. A channel is basically multiple paths or channels built out of a single TCP connection between a Queue and each of it consumer.
+    2. This allows a single service to process many more messages without the overhead and costs of building multiple TCP connections.
+11. How do **Acknowledgements work in queuing world? -> this provides Reliability**
+    1. Basically, when should a message be deleted from a queue. Mainly two ways:
+        1. **Automatic**: is when a queue deletes a message after it got delivered.
+           1. But, this comes with a con that if delivering a message takes time and the consumer crashes in the meantime and if the queue deleted the message automatically, then that message will be lost.
+        2. **Explicit**: is when we have the consumer explicitly tell the queue that it got the message and that the message can now be safely deleted.
+           1. This way is Reliable but more Complex than the Automatic way above
+12. **Some concrete messaging systems:**
+    1. **RabbitMQ**
+        1. Based on AMQP protocol. And  best used as a Message Queue.
+        2. Messages are stored until consumer retrieves them and then they are deleted
+        3. Suited for running heavy-processing tasks in offline fashion like payment processing, manipulating images etc
+        4. Can also be used for Distributing tasks (amongst multiple servers)
+        5. Please note the _concepts from bullet points 8 (Exchange) to 11 (Acknowledgements) more specifically apply to RabbitMQ_ (but also in general to other queueing systems/products)
+    2. **Kafka**
+       1. Is the most popular pub/sub system currently. And, it calls itself an Event-stream platform.
+       2. It also has concepts of Producers and Consumer but since its pub/sub the messages are not deleted after they are consumed instead they are deleted after a period of time.
+       3. **Some important terms in Kafka world:**
+           1. In Kafka, queues are called “Topics” and messages are called “events”. The topics are usually sharded or or in Kafka terms “Partitioned”
+           2. The consumers of a given topic divide partitions amongst themselves. Some consumer might be subscribed to more than one partitions and other might only subscribe to one partition.
+           3. Each event has a key, value and timestamp.
+           4. **Consumer groups and how they help in partitioning:**
+               1. Basically, Kafka distributes a topic’s partitions across various brokers
+               2. A Consumer group is a group of consumers which read from exclusive set of partitions. Basically, a group is formed to read data from various brokers but from different partitions.
+                   1. For example, Receipts service might be a consumer group reading from only those partitions (that might be store in different brokers or servers) that are relevant to creating user receipts.
+               3. And, Kafka stores the offsets at which each consumer in a consumer group has been reading. As the consumer continues reading the offset value is increased.
+
+## Protocols
